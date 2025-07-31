@@ -24,6 +24,8 @@ import BottomNav from './components/BottomNav';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { NotificationService } from './services/notificationService';
+import { ToastProvider, useToast } from './components/ToastContext';
 
 /**
  * A custom hook to manage state that persists in localStorage.
@@ -56,7 +58,8 @@ function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<Rea
 }
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { showToast } = useToast();
   const [activeView, setActiveView] = useState<View>('Dashboard');
   const [navigationStack, setNavigationStack] = useState<View[]>(['Dashboard']);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -163,10 +166,31 @@ const App: React.FC = () => {
     };
   }, [navigationStack, isSidebarOpen, activeView]);
 
+  // Check for budget alerts when transactions or budgets change
+  useEffect(() => {
+    const checkExistingBudgetAlerts = async () => {
+      if (transactions.length > 0 && budgets.length > 0) {
+        try {
+          await NotificationService.checkBudgetAlerts(transactions, budgets);
+        } catch (error) {
+          console.error('Error checking existing budget alerts:', error);
+        }
+      }
+    };
+
+    // Only check if we have both transactions and budgets
+    if (transactions.length > 0 && budgets.length > 0) {
+      checkExistingBudgetAlerts();
+    }
+  }, [transactions, budgets]);
+
   // Handle notification taps and setup
   useEffect(() => {
     const setupNotifications = async () => {
       try {
+        // Initialize notification service
+        await NotificationService.initializeNotifications();
+        
         // Request permissions on app start
         let permissions = await LocalNotifications.checkPermissions();
         if (permissions.display !== 'granted') {
@@ -186,9 +210,21 @@ const App: React.FC = () => {
             lights: true,
             vibration: true
           });
-          console.log('Notification channel created');
+          
+          await LocalNotifications.createChannel({
+            id: 'budget_alerts',
+            name: 'Budget Alerts',
+            description: 'Notifications for budget overruns',
+            importance: 4, // High importance
+            visibility: 1, // Public
+            sound: 'default',
+            lights: true,
+            vibration: true
+          });
+          
+          console.log('Notification channels created');
         } catch (e) {
-          console.log('Notification channel already exists or error:', e);
+          console.log('Notification channels already exist or error:', e);
         }
 
         // Setup notification listener for when user taps notification
@@ -203,6 +239,17 @@ const App: React.FC = () => {
             setTimeout(() => {
               console.log('Navigating to Notes page from notification');
               navigateTo('Notes');
+            }, 1000);
+          }
+          
+          // Check if this is a budget alert notification
+          if (notificationAction.notification.extra?.type === 'budget_alert') {
+            console.log('Budget alert notification tapped, navigating to Profile page');
+            
+            // Add a small delay to ensure app is fully loaded
+            setTimeout(() => {
+              console.log('Navigating to Profile page from budget notification');
+              navigateTo('Profile');
             }, 1000);
           }
         });
@@ -254,30 +301,6 @@ const App: React.FC = () => {
             
             // Only schedule if the reminder is in the future
             if (reminderDate > now) {
-                // Test immediate notification first
-                await LocalNotifications.schedule({
-                    notifications: [
-                        {
-                            title: "MoolaBuddy Test",
-                            body: "Testing notification system...",
-                            id: 999999,
-                            channelId: 'moolabuddy-reminders',
-                            schedule: { 
-                                at: new Date(Date.now() + 5000), // 5 seconds from now
-                                allowWhileIdle: true,
-                                repeats: false
-                            },
-                            sound: 'default',
-                            actionTypeId: 'OPEN_APP',
-                            extra: {
-                                type: 'test',
-                                action: 'test'
-                            }
-                        }
-                    ]
-                });
-                console.log('✅ Test notification scheduled for 5 seconds from now');
-
                 // Schedule the actual notification
                 await LocalNotifications.schedule({
                     notifications: [
@@ -367,12 +390,64 @@ const App: React.FC = () => {
 
 
   // Transaction Management
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
     const newTransaction: Transaction = {
       ...transaction,
       id: crypto.randomUUID(),
       date: new Date().toISOString().split('T')[0],
     };
+    
+    // Check for budget alerts BEFORE adding the transaction
+    try {
+      // For expense transactions, check if they exceed any budget
+      if (transaction.type === TransactionType.EXPENSE) {
+        const allTransactions = [newTransaction, ...transactions];
+        
+        // Check each budget to see if this transaction causes an overrun
+        for (const budget of budgets) {
+          if (transaction.category.toLowerCase() === budget.category.toLowerCase()) {
+            const spentInCategory = allTransactions
+              .filter(t => t.type === TransactionType.EXPENSE && t.category.toLowerCase() === budget.category.toLowerCase())
+              .reduce((sum, t) => sum + t.amount, 0);
+            
+            // If this transaction would cause the budget to be exceeded, send notification
+            if (spentInCategory > budget.limit) {
+              console.log(`Budget alert triggered: ${budget.category} exceeded by N$${(spentInCategory - budget.limit).toFixed(2)}`);
+              
+              await LocalNotifications.schedule({
+                notifications: [
+                  {
+                    id: Date.now(),
+                    title: 'Budget Alert!',
+                    body: `You've exceeded your ${budget.category} budget by N$${(spentInCategory - budget.limit).toFixed(2)}. You spent N$${spentInCategory.toFixed(2)} but your limit was N$${budget.limit.toFixed(2)}.`,
+                    sound: 'default',
+                    actionTypeId: 'OPEN_APP',
+                    channelId: 'budget_alerts',
+                    extra: {
+                      type: 'budget_alert',
+                      category: budget.category,
+                      overspent: spentInCategory - budget.limit
+                    }
+                  }
+                ]
+              });
+            }
+          }
+        }
+      }
+      
+      // Check savings alert if it's an income transaction
+      if (transaction.type === TransactionType.INCOME) {
+        const totalIncome = transactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0) + transaction.amount;
+        const totalExpenses = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+        const savings = totalIncome - totalExpenses;
+        await NotificationService.checkSavingsAlert(totalIncome, savings);
+      }
+    } catch (error) {
+      console.error('Error checking budget alerts:', error);
+    }
+    
+    // Add the transaction to state
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
@@ -687,19 +762,57 @@ const App: React.FC = () => {
           });
 
           // Also show alert for immediate feedback
-          alert(`✅ Data exported successfully!\n\nFile saved as: ${filename}\nLocation: Documents folder\n\nYour Excel file contains:\n• Transactions\n• Goals\n• Notes\n• Projections\n• Budgets\n• Costs\n• Summary`);
-      } catch (error) {
+          showToast(`Data exported successfully! File saved as: ${filename}`, 'success');
+        } catch (error) {
           console.error('Export error:', error);
-          alert('❌ Export failed. Please try again or check your device storage.');
-      }
+          showToast('Export failed. Please try again or check your device storage.', 'error');
+        }
   };
 
-  const financialData = useMemo(() => ({
-    transactions,
-    goals,
-    income: transactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0),
-    expenses: transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0),
-  }), [transactions, goals]);
+  const financialData = useMemo(() => {
+    const income = transactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+    const savings = income - expenses;
+    
+    // Calculate spending by category
+    const spendingByCategory = transactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((acc, t) => {
+        const category = t.category.toLowerCase();
+        acc[category] = (acc[category] || 0) + t.amount;
+        return acc;
+      }, {} as Record<string, number>);
+    
+    // Get recent transactions (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentTransactions = transactions.filter(t => 
+      new Date(t.date) >= thirtyDaysAgo
+    );
+    
+    // Calculate monthly averages
+    const monthlyIncome = income * 12 / 365 * 30; // Estimate monthly income
+    const monthlyExpenses = expenses * 12 / 365 * 30; // Estimate monthly expenses
+    
+    return {
+      transactions,
+      goals,
+      income,
+      expenses,
+      savings,
+      spendingByCategory,
+      recentTransactions,
+      monthlyIncome,
+      monthlyExpenses,
+      totalTransactions: transactions.length,
+      incomeTransactions: transactions.filter(t => t.type === TransactionType.INCOME).length,
+      expenseTransactions: transactions.filter(t => t.type === TransactionType.EXPENSE).length,
+      // Add budget information if available
+      budgets,
+      // Add profile information
+      profile
+    };
+  }, [transactions, goals, budgets, profile]);
 
   const renderView = () => {
     switch (activeView) {
@@ -809,6 +922,14 @@ const App: React.FC = () => {
       </div>
       <BottomNav activeView={activeView} navigateTo={navigateTo} />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 };
 

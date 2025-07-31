@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoolaBuddy Security Guide</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .section {
+      margin-bottom: 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .checklist li::before {
+      content: '✅';
+      margin-right: 8px;
+    }
+    code {
+      background-color: #eef;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>MoolaBuddy Security Guide</h1>
+
+  <div class="section">
+    <h2>Understanding Google Play Protect Warnings</h2>
+
+    <h3>Why This Happens</h3>
+    <p>When you install MoolaBuddy from an APK file (not from Google Play Store), Google Play Protect may show a security warning. This is normal and expected behavior for apps distributed outside the official Google Play Store.</p>
+
+    <h3>Why Google Play Protect Shows Warnings</h3>
+    <ul>
+      <li><strong>Unknown Source Installation</strong>: Apps installed from APK files are considered "unknown sources"</li>
+      <li><strong>No Google Verification</strong>: Apps not distributed through Google Play don't go through Google's security scanning</li>
+      <li><strong>Default Security Behavior</strong>: Google Play Protect is designed to protect users from potentially malicious apps</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Solutions</h2>
+
+    <h3>Option 1: Install from Google Play Store (Recommended)</h3>
+    <ol>
+      <li>Search for <strong>"MoolaBuddy"</strong> in the Google Play Store</li>
+      <li>Install directly from the store listing</li>
+      <li>No security warnings will appear</li>
+    </ol>
+
+    <h3>Option 2: Trust the App (For APK Installation)</h3>
+    <h4>Steps to Trust the App:</h4>
+    <ol>
+      <li>When the warning appears, tap <strong>"More details"</strong></li>
+      <li>Scroll down and tap <strong>"Install anyway"</strong></li>
+      <li>Confirm that you want to install the app</li>
+      <li>The app will install and work normally</li>
+    </ol>
+
+    <h4>Why MoolaBuddy is Safe:</h4>
+    <ul class="checklist">
+      <li>Open Source: The code is publicly available and can be reviewed</li>
+      <li>No Malicious Permissions: Only requests necessary permissions for functionality</li>
+      <li>Local Data Storage: All financial data stays on your device</li>
+      <li>No Network Tracking: No personal data is sent to external servers</li>
+      <li>Standard Development: Built using standard Android development practices</li>
+    </ul>
+
+    <h3>Option 3: Disable Google Play Protect (Not Recommended)</h3>
+    <ol>
+      <li>Go to <code>Settings → Security → Google Play Protect</code></li>
+      <li>Turn off <code>Scan apps with Play Protect</code></li>
+      <li>Re-enable after installing MoolaBuddy</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>Security Features in MoolaBuddy</h2>
+    <h3>Built-in Security Measures:</h3>
+    <ul>
+      <li><strong>Network Security</strong>:
+        <ul>
+          <li>HTTPS-only connections</li>
+          <li>No cleartext traffic allowed</li>
+          <li>Secure certificate validation</li>
+        </ul>
+      </li>
+      <li><strong>Code Protection</strong>:
+        <ul>
+          <li>ProGuard obfuscation enabled</li>
+          <li>Code minification and optimization</li>
+          <li>Secure signing configuration</li>
+        </ul>
+      </li>
+      <li><strong>Data Protection</strong>:
+        <ul>
+          <li>Local storage only (no cloud sync)</li>
+          <li>No personal data collection</li>
+          <li>Privacy-focused design</li>
+        </ul>
+      </li>
+      <li><strong>Permission Management</strong>:
+        <ul>
+          <li>Minimal required permissions</li>
+          <li>Clear permission explanations</li>
+          <li>No unnecessary access requests</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Permissions Explained</h2>
+    <ul>
+      <li><strong>Internet</strong>: For AI advisor features and potential future updates</li>
+      <li><strong>Notifications</strong>: For financial reminders and budget alerts</li>
+      <li><strong>Storage</strong>: For saving receipts and exporting data</li>
+      <li><strong>Camera</strong>: For scanning receipts (optional)</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Privacy Policy</h2>
+    <ul class="checklist">
+      <li>No Personal Data Collection: We don't collect or store your personal information</li>
+      <li>Local Storage: All your financial data stays on your device</li>
+      <li>No Tracking: No analytics or tracking of your usage</li>
+      <li>Open Source: Code is available for review and verification</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Troubleshooting</h2>
+
+    <h3>If the warning persists:</h3>
+    <ol>
+      <li>Check your Android version: Some older versions may show more warnings</li>
+      <li>Update Google Play Services: Ensure you have the latest version</li>
+      <li>Clear Play Store cache: <code>Settings → Apps → Google Play Store → Clear Cache</code></li>
+      <li>Restart your device: Sometimes helps with permission issues</li>
+    </ol>
+
+    <h3>If the app doesn't install:</h3>
+    <ol>
+      <li>Enable Unknown Sources: <code>Settings → Security → Unknown Sources</code></li>
+      <li>Check storage space: Ensure you have enough free space</li>
+      <li>Try downloading again: Sometimes APK files can be corrupted during download</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>Support</h2>
+    <ol>
+      <li>Check our FAQ: Common questions and solutions</li>
+      <li>Contact Support: Email us for direct assistance</li>
+      <li>Use Google Play Store: The most reliable installation method</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>Version Information</h2>
+    <ul>
+      <li><strong>Current Version</strong>: 1.0</li>
+      <li><strong>Minimum Android</strong>: 6.0 (API 23)</li>
+      <li><strong>Target Android</strong>: 14 (API 34)</li>
+      <li><strong>Architecture</strong>: ARM64, ARM, x86</li>
+    </ul>
+  </div>
+
+  <hr />
+
+  <p><em>Note</em>: This guide is for educational purposes. Always use caution when installing apps from unknown sources and ensure you trust the developer.</p>
+</body>
+</html>

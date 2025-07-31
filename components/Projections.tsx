@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { getProjectionAnalysis } from '../services/geminiService';
 import Card from './Card';
 import type { Projection } from '../types';
+import { useToast } from './ToastContext';
 
 interface ProjectionData {
   year: number;
@@ -51,6 +52,7 @@ const Projections: React.FC<ProjectionsProps> = ({ projections, addProjection, u
   const [projectionData, setProjectionData] = useState<ProjectionData[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   const calculateProjection = useCallback(() => {
     const p = parseFloat(initial);
@@ -91,7 +93,7 @@ const Projections: React.FC<ProjectionsProps> = ({ projections, addProjection, u
 
   const handleSaveProjection = () => {
     if(!name.trim()) {
-      alert("Please enter a name for the projection.");
+      showToast('Please enter a name for the projection.', 'error');
       return;
     }
     addProjection({

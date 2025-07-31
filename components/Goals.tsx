@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Goal } from '../types';
 import Card from './Card';
+import { useToast } from './ToastContext';
 
 interface GoalsProps {
   goals: Goal[];
@@ -34,7 +35,7 @@ const EditGoalModal: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !targetAmount || !deadline || !currentAmount) {
-      alert('Please fill all fields.');
+      showToast('Please fill all fields.', 'error');
       return;
     }
     onSave({
@@ -118,11 +119,12 @@ const Goals: React.FC<GoalsProps> = ({ goals, addGoal, updateGoal, deleteGoal })
   const [targetAmount, setTargetAmount] = useState('');
   const [deadline, setDeadline] = useState('');
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const { showToast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if(!name || !targetAmount || !deadline) {
-        alert('Please fill all fields');
+        showToast('Please fill all fields', 'error');
         return;
     }
     addGoal({

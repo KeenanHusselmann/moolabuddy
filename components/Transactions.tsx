@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Card from './Card';
 import type { Transaction } from '../types';
 import { TransactionType } from '../types';
+import { useToast } from './ToastContext';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -37,7 +38,7 @@ const EditTransactionModal: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !category || !date) {
-      alert('Please fill all fields.');
+      showToast('Please fill all fields.', 'error');
       return;
     }
     onSave({
@@ -99,6 +100,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, addTransactio
   const [category, setCategory] = useState('');
   const [type, setType] = useState(TransactionType.EXPENSE);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const { showToast } = useToast();
 
   const sortedTransactions = useMemo(() => {
     // Filter out shopping list and receipt transactions
@@ -112,7 +114,7 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, addTransactio
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !category) {
-      alert('Please fill in all fields.');
+      showToast('Please fill in all fields.', 'error');
       return;
     }
     addTransaction({ description, amount: parseFloat(amount), type, category });

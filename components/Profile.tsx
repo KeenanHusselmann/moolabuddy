@@ -1,8 +1,10 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card from './Card';
 import type { UserProfile, Budget, Transaction } from '../types';
 import { TransactionType } from '../types';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { useToast } from './ToastContext';
 
 interface ProfileProps {
     profile: UserProfile;
@@ -25,6 +27,23 @@ const BudgetRow: React.FC<{ budget: Budget; transactions: Transaction[], onDelet
     const progress = budget.limit > 0 ? (spent / budget.limit) * 100 : 0;
     const isOverBudget = progress > 100;
     const remaining = budget.limit - spent;
+
+    useEffect(() => {
+        if (isOverBudget) {
+            LocalNotifications.schedule({
+                notifications: [{
+                    id: 1,
+                    title: `Budget Exceeded for ${budget.category}`,
+                    body: `You have exceeded your monthly budget for ${budget.category}. Spent: N$${spent.toFixed(2)}, Limit: N$${budget.limit.toFixed(2)}`,
+                    schedule: { at: new Date(Date.now() + 1000) }, // Schedule for 1 second from now
+                    sound: 'default',
+                    attachments: [],
+                    actionTypeId: '',
+                    extra: { budgetId: budget.id },
+                }],
+            });
+        }
+    }, [isOverBudget, budget.category, spent, budget.limit]);
 
     return (
         <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600/50 hover:border-gray-500/50 transition-colors">
@@ -78,40 +97,83 @@ const Profile: React.FC<ProfileProps> = ({ profile, setProfile, budgets, addBudg
     const [newBudgetName, setNewBudgetName] = useState('');
     const [newBudgetLimit, setNewBudgetLimit] = useState('');
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const { showToast } = useToast();
+
+    // Check for budget overruns and send notifications
+    useEffect(() => {
+        const checkBudgetOverruns = async () => {
+            try {
+                for (const budget of budgets) {
+                    const spent = transactions
+                        .filter(t => t.type === TransactionType.EXPENSE && t.category.toLowerCase() === budget.category.toLowerCase())
+                        .reduce((sum, t) => sum + t.amount, 0);
+                    
+                    if (spent > budget.limit) {
+                        console.log(`Budget overrun detected: ${budget.category} - Spent: N$${spent.toFixed(2)}, Limit: N$${budget.limit.toFixed(2)}`);
+                        
+                        await LocalNotifications.schedule({
+                            notifications: [{
+                                id: Date.now() + Math.random(),
+                                title: `Budget Alert: ${budget.category}`,
+                                body: `You've exceeded your ${budget.category} budget by N$${(spent - budget.limit).toFixed(2)}. You spent N$${spent.toFixed(2)} but your limit was N$${budget.limit.toFixed(2)}.`,
+                                sound: 'default',
+                                actionTypeId: 'OPEN_APP',
+                                channelId: 'budget_alerts',
+                                extra: {
+                                    type: 'budget_alert',
+                                    category: budget.category,
+                                    overspent: spent - budget.limit
+                                }
+                            }],
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking budget overruns:', error);
+            }
+        };
+
+        if (budgets.length > 0 && transactions.length > 0) {
+            checkBudgetOverruns();
+        }
+    }, [budgets, transactions]);
 
     const handleProfileSave = (e: React.FormEvent) => {
         e.preventDefault();
         setProfile(currentProfile);
-        alert('Profile updated successfully!');
+        showToast('Profile updated successfully!', 'success');
     };
 
     const handleAddBudget = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newBudgetName || !newBudgetLimit || parseFloat(newBudgetLimit) <= 0) {
-            alert('Please enter a valid category name and a positive limit.');
+            showToast('Please enter a valid category name and a positive limit.', 'error');
             return;
         }
         if (budgets.some(b => b.category.toLowerCase() === newBudgetName.toLowerCase())) {
-            alert('A budget for this category already exists.');
+            showToast('A budget for this category already exists.', 'error');
             return;
         }
         addBudget({ category: newBudgetName, limit: parseFloat(newBudgetLimit) });
         setNewBudgetName('');
         setNewBudgetLimit('');
+        showToast(`Budget for "${newBudgetName}" added successfully!`, 'success');
     };
 
     const handleExport = async () => {
         if (transactions.length === 0 && budgets.length === 0) {
-            alert('No data to export. Start using the app to create some data!');
+            showToast('No data to export. Start using the app to create some data!', 'warning');
             return;
         }
         await exportData();
+        showToast('All your data has been exported successfully!', 'success');
     };
 
     const handleReset = () => {
         if (showResetConfirm) {
             resetAllData();
             setShowResetConfirm(false);
+            showToast('All your data has been reset successfully!', 'success');
         } else {
             setShowResetConfirm(true);
             setTimeout(() => setShowResetConfirm(false), 3000);

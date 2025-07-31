@@ -1,13 +1,9 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie, Line, BarChart } from 'recharts';
-import type { Transaction, AIInsight, AIInsightTip, CostItem } from '../types';
+import type { Transaction, CostItem } from '../types';
 import { TransactionType } from '../types';
-import { getFinancialInsights } from '../services/geminiService';
 import Card from './Card';
-import SavingsIcon from './icons/SavingsIcon';
-import SpendingIcon from './icons/SpendingIcon';
-import InvestmentIcon from './icons/InvestmentIcon';
 
 interface DashboardProps {
   financialData: {
@@ -30,7 +26,6 @@ const generateConsistentColor = (category: string) => {
   return COLORS[colorIndex];
 };
 
-
 const StatCard: React.FC<{ title: string; value: string; subtext?: string, className?: string }> = ({ title, value, subtext, className }) => (
     <Card className={`p-4 ${className}`}>
         <h3 className="text-sm font-medium text-gray-400">{title}</h3>
@@ -38,25 +33,6 @@ const StatCard: React.FC<{ title: string; value: string; subtext?: string, class
         {subtext && <p className="text-xs text-gray-500 mt-1">{subtext}</p>}
     </Card>
 );
-
-const TipCard: React.FC<{ tip: AIInsightTip }> = ({ tip }) => {
-    const icons = {
-        savings: <SavingsIcon />,
-        spending: <SpendingIcon />,
-        investment: <InvestmentIcon />,
-    };
-    const colors = {
-        savings: 'border-green-500/50',
-        spending: 'border-red-500/50',
-        investment: 'border-purple-500/50',
-    };
-    return (
-        <div className={`flex items-start gap-3 p-3 bg-gray-900/50 rounded-lg border-l-4 ${colors[tip.type]}`}>
-            <div className="flex-shrink-0 w-6 h-6 mt-1">{icons[tip.type]}</div>
-            <p className="text-gray-300">{tip.description}</p>
-        </div>
-    )
-}
 
 // Custom label for Pie slices
 const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, index, name }) => {
@@ -81,10 +57,6 @@ const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, v
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ financialData, costs }) => {
-  const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
   const { transactions, income, expenses } = financialData;
   const balance = income - expenses;
   const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
@@ -124,6 +96,12 @@ const Dashboard: React.FC<DashboardProps> = ({ financialData, costs }) => {
         }
     });
     
+    // If we have current month data, use the actual expenses value
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    if (trends[currentMonth]) {
+        trends[currentMonth].expenses = expenses;
+    }
+    
     return Object.values(trends)
       .map(trend => ({
           ...trend,
@@ -133,27 +111,8 @@ const Dashboard: React.FC<DashboardProps> = ({ financialData, costs }) => {
       }))
       .sort((a,b) => a.month.localeCompare(b.month));
 
-  }, [transactions]);
+  }, [transactions, expenses]);
 
-
-  const fetchInsights = useCallback(async () => {
-    setIsLoading(true);
-    setError('');
-    setAiInsights(null);
-    try {
-      const insights = await getFinancialInsights({ ...financialData, costs });
-      if (insights) {
-          setAiInsights(insights);
-      } else {
-          setError('Failed to load AI insights. Please try again.');
-      }
-    } catch (error) {
-      console.error(error);
-      setError('Failed to load AI insights. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [financialData, costs]);
 
   const recentTransactions = useMemo(() => {
     // Filter out shopping list and receipt transactions
@@ -184,7 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({ financialData, costs }) => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        <Card className="p-3 sm:p-4 h-[280px] sm:h-[350px] lg:h-[400px] lg:col-span-2 overflow-hidden">
+        <Card className="p-3 sm:p-4 h-[280px] sm:h-[350px] lg:h-[400px] lg:col-span-3 overflow-hidden">
             <h3 className="text-lg font-semibold text-white mb-3 sm:mb-4">Monthly Cash Flow</h3>
              {monthlyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="85%">
@@ -216,43 +175,6 @@ const Dashboard: React.FC<DashboardProps> = ({ financialData, costs }) => {
              ) : (
                 <div className="flex items-center justify-center h-full text-gray-500"><p>Not enough data for a trend analysis.</p></div>
              )}
-        </Card>
-        <Card className="p-3 sm:p-4 flex flex-col h-[280px] sm:h-[350px] lg:h-[400px] overflow-hidden">
-            <h3 className="text-lg font-semibold text-white mb-3 sm:mb-4">AI Financial Advisor</h3>
-            <div className="flex-grow overflow-y-auto pr-2 space-y-3 text-sm text-gray-300">
-                {isLoading && <div className="flex justify-center items-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div></div>}
-                {error && <p className="text-red-400 text-center">{error}</p>}
-                {aiInsights ? (
-                    <div className="space-y-4">
-                        <Card className="p-3 bg-gray-900/30">
-                            <h4 className="font-semibold text-brand-400">Summary</h4>
-                            <p className="mt-1">{aiInsights.summary}</p>
-                        </Card>
-                         <div>
-                            <h4 className="font-semibold text-brand-400 mb-2">Actionable Tips</h4>
-                            <div className="space-y-2">
-                                {aiInsights.tips.map((tip, index) => <TipCard key={index} tip={tip} />)}
-                            </div>
-                        </div>
-                        <Card className="p-3 bg-gray-900/30">
-                             <h4 className="font-semibold text-brand-400">Observation</h4>
-                             <p className="mt-1">{aiInsights.observation}</p>
-                        </Card>
-                    </div>
-                ) : (
-                    !isLoading && !error &&
-                    <div className="text-center text-gray-400 flex flex-col items-center justify-center h-full">
-                        <p>Click the button below to get personalized financial insights powered by AI.</p>
-                    </div>
-                )}
-            </div>
-            <button
-                onClick={fetchInsights}
-                disabled={isLoading}
-                className="mt-4 w-full bg-brand-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-brand-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-                {isLoading ? 'Generating...' : 'Get AI Insights'}
-            </button>
         </Card>
       </div>
 

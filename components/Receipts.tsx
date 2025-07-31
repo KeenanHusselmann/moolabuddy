@@ -1,6 +1,31 @@
 import React, { useState, useRef } from 'react';
 import Card from './Card';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { useToast } from './ToastContext';
+
+// Simple OCR-like text extraction (this would be replaced with a real OCR service)
+const extractTextFromImage = async (imageDataUrl: string): Promise<{ amount?: number; store?: string }> => {
+  // This is a placeholder for OCR functionality
+  // In a real implementation, you would use a service like Google Cloud Vision API
+  // or Tesseract.js for client-side OCR
+  
+  try {
+    // Simulate OCR processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // For now, return empty results - this would be replaced with actual OCR
+    return {
+      amount: undefined,
+      store: undefined
+    };
+  } catch (error) {
+    console.error('Error extracting text from image:', error);
+    return {
+      amount: undefined,
+      store: undefined
+    };
+  }
+};
 
 export interface Receipt {
   id: string;
@@ -29,6 +54,7 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
   stores = [],
   setStores
 }) => {
+  const { showToast } = useToast();
   const [activeView, setActiveView] = useState<'list' | 'add'>('list');
   const [newReceipt, setNewReceipt] = useState({
     amount: '',
@@ -48,6 +74,34 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
 
   const totalAmount = receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
 
+  const processCapturedImage = async (imageDataUrl: string) => {
+    setCapturedImage(imageDataUrl);
+    
+    // Show processing toast
+    showToast('Processing receipt image...', 'info');
+    
+    try {
+      const extractedData = await extractTextFromImage(imageDataUrl);
+      
+      if (extractedData.amount) {
+        setNewReceipt(prev => ({ ...prev, amount: extractedData.amount.toString() }));
+        showToast(`Amount detected: N$${extractedData.amount.toFixed(2)}`, 'success');
+      }
+      
+      if (extractedData.store) {
+        setNewReceipt(prev => ({ ...prev, store: extractedData.store }));
+        showToast(`Store detected: ${extractedData.store}`, 'success');
+      }
+      
+      if (!extractedData.amount && !extractedData.store) {
+        showToast('Could not extract data from image. Please enter manually.', 'warning');
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      showToast('Error processing image. Please enter data manually.', 'error');
+    }
+  };
+
   const startCamera = async () => {
     try {
       // Use Capacitor Camera plugin for native camera access
@@ -59,7 +113,7 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
       });
 
       if (image.dataUrl) {
-        setCapturedImage(image.dataUrl);
+        await processCapturedImage(image.dataUrl);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -83,7 +137,7 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
       });
 
       if (image.dataUrl) {
-        setCapturedImage(image.dataUrl);
+        await processCapturedImage(image.dataUrl);
       }
     } catch (error) {
       console.error('Error accessing gallery:', error);
@@ -94,13 +148,13 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
 
   const saveReceipt = () => {
     if (!capturedImage || !newReceipt.amount || !newReceipt.description) {
-      alert('Please fill in all required fields and capture/upload an image');
+      showToast('Please fill in all required fields and capture/upload an image', 'error');
       return;
     }
 
     const amount = parseFloat(newReceipt.amount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount');
+      showToast('Please enter a valid amount', 'error');
       return;
     }
 
@@ -116,37 +170,14 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
 
     setReceipts(prev => [receipt, ...prev]);
     
-    // Also add as transaction
+    // Add to transactions
     addTransaction({
-      description: `${newReceipt.description} (Receipt: ${newReceipt.store})`,
+      type: 'EXPENSE',
       amount: amount,
-      type: 'expense',
+      description: newReceipt.description,
       category: newReceipt.category || 'Other',
       date: newReceipt.date
     });
-
-    // Update store spending if store name is provided
-    if (newReceipt.store && setStores) {
-      const existingStore = stores.find(store => 
-        store.name.toLowerCase() === newReceipt.store.toLowerCase()
-      );
-      
-      if (existingStore) {
-        setStores(prev => prev.map(store => 
-          store.id === existingStore.id 
-            ? { 
-                ...store, 
-                totalSpent: store.totalSpent + amount,
-                visitCount: store.visitCount + 1,
-                lastVisit: new Date().toISOString()
-              }
-            : store
-        ));
-      }
-    }
-
-    // Show success notification
-    alert(`✅ Receipt saved successfully!\n\n💰 Amount: N$ ${amount.toFixed(2)}\n🏪 Store: ${newReceipt.store || 'Not specified'}\n📝 Description: ${newReceipt.description}`);
 
     // Reset form
     setNewReceipt({
@@ -158,6 +189,8 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
     });
     setCapturedImage(null);
     setActiveView('list');
+
+    showToast(`Receipt saved successfully! Amount: N$${amount.toFixed(2)}`, 'success');
   };
 
   const deleteReceipt = (id: string) => {
@@ -192,12 +225,8 @@ const ReceiptsComponent: React.FC<ReceiptsProps> = ({
           <h2 className="text-xl sm:text-2xl font-bold text-white">Add Receipt</h2>
           <button
             onClick={() => {
-              if (goBack) {
-                goBack();
-              } else {
-                setActiveView('list');
-                setCapturedImage(null);
-              }
+              setActiveView('list');
+              setCapturedImage(null);
             }}
             className="text-brand-300 hover:text-white transition-colors text-sm sm:text-base"
           >

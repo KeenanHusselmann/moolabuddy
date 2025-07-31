@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Card from './Card';
 import type { CostItem } from '../types';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { useToast } from './ToastContext';
 
 interface ToolsProps {
     costs: CostItem[];
@@ -79,6 +80,7 @@ const CostManager: React.FC<CostManagerProps> = ({ costs, addCost, deleteCost })
     const [name, setName] = useState('');
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<'Fixed' | 'Variable'>('Fixed');
+    const { showToast } = useToast();
 
     const { fixedCosts, variableCosts, totalFixed, totalVariable, breakdownData } = useMemo(() => {
         const fixed = costs.filter(c => c.type === 'Fixed');
@@ -102,8 +104,8 @@ const CostManager: React.FC<CostManagerProps> = ({ costs, addCost, deleteCost })
     const handleAddCost = (e: React.FormEvent) => {
         e.preventDefault();
         if(!name || !amount || parseFloat(amount) <= 0) {
-            alert('Please enter a valid name and positive amount.');
-            return;
+          showToast('Please enter a valid name and positive amount.', 'error');
+          return;
         }
         addCost({ name, amount: parseFloat(amount), type });
         setName('');

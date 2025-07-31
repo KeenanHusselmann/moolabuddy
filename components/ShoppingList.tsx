@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Card from './Card';
+import { useToast } from './ToastContext';
 
 export interface ShoppingItem {
   id: string;
@@ -36,6 +37,7 @@ const ShoppingListComponent: React.FC<ShoppingListProps> = ({
   addTransaction,
   goBack
 }) => {
+  const { showToast } = useToast();
   const [activeView, setActiveView] = useState<'lists' | 'create' | 'edit'>('lists');
   const [editingList, setEditingList] = useState<ShoppingList | null>(null);
   const [newListName, setNewListName] = useState('');
@@ -101,7 +103,7 @@ const ShoppingListComponent: React.FC<ShoppingListProps> = ({
     }));
     
     // Show success notification
-    alert(`✅ Item "${newItemName}" added to shopping list!\n\n💰 Cost: N$ ${(cost * quantity).toFixed(2)}\n📦 Quantity: ${quantity}\n🏷️ Category: ${newItemCategory || 'Other'}`);
+    showToast(`Item "${newItemName}" added to shopping list!\n\nCost: N$ ${(cost * quantity).toFixed(2)}\nQuantity: ${quantity}\nCategory: ${newItemCategory || 'Other'}`);
     
     setNewItemName('');
     setNewItemCategory('');
@@ -172,7 +174,7 @@ const ShoppingListComponent: React.FC<ShoppingListProps> = ({
     ));
 
     // Show success notification
-    alert(`✅ Shopping list "${list.name}" submitted successfully!\n\n📋 ${list.items.length} items added to transactions\n💰 Total amount: N$ ${list.totalEstimatedCost.toFixed(2)}`);
+    showToast(`Shopping list "${list.name}" submitted successfully!\n\n${list.items.length} items added to transactions\nTotal amount: N$ ${list.totalEstimatedCost.toFixed(2)}`);
   };
 
   const deleteList = (listId: string) => {
@@ -208,11 +210,7 @@ const ShoppingListComponent: React.FC<ShoppingListProps> = ({
           <h2 className="text-xl sm:text-2xl font-bold text-white">Create Shopping List</h2>
           <button
             onClick={() => {
-              if (goBack) {
-                goBack();
-              } else {
-                setActiveView('lists');
-              }
+              setActiveView('lists');
             }}
             className="text-brand-300 hover:text-white transition-colors text-sm sm:text-base"
           >
@@ -254,12 +252,8 @@ const ShoppingListComponent: React.FC<ShoppingListProps> = ({
           <h2 className="text-2xl font-bold text-white">Edit: {editingList.name}</h2>
           <button
             onClick={() => {
-              if (goBack) {
-                goBack();
-              } else {
-                setActiveView('lists');
-                setEditingList(null);
-              }
+              setActiveView('lists');
+              setEditingList(null);
             }}
             className="text-brand-300 hover:text-white transition-colors"
           >

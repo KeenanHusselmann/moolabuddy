@@ -40,14 +40,117 @@ export const getFinancialInsights = async (financialData: any): Promise<AIInsigh
   }
 
   const model = "gemini-2.5-flash";
-  const prompt = `
-    Act as an expert, friendly financial advisor. Based on the following financial data, provide a structured analysis in JSON format.
-    The data should include a concise summary, exactly three actionable tips (categorized as 'savings', 'spending', or 'investment'), and one final observation about their habits.
-    Keep the tone positive, encouraging, and empowering.
-
-    Financial Data:
-    ${JSON.stringify(financialData, null, 2)}
-  `;
+  
+  // Create a detailed analysis prompt based on actual transaction data
+  let prompt = '';
+  
+  if (financialData.requestType === 'budget_optimization') {
+    prompt = `
+      Act as an expert financial advisor. Analyze the user's budget performance and provide specific optimization advice.
+      
+      Financial Data:
+      - Total Income: N$${financialData.income?.toFixed(2) || 0}
+      - Total Expenses: N$${financialData.expenses?.toFixed(2) || 0}
+      - Net Savings: N$${financialData.savings?.toFixed(2) || 0}
+      
+      Budget Analysis:
+      ${financialData.budgetAnalysis ? financialData.budgetAnalysis.map(b => 
+        `- ${b.category}: Spent N$${b.spent.toFixed(2)} of N$${b.limit.toFixed(2)} (${b.percentageUsed.toFixed(1)}% used)`
+      ).join('\n') : 'No budget data available'}
+      
+      Spending by Category:
+      ${Object.entries(financialData.spendingByCategory || {}).map(([category, amount]) => 
+        `- ${category}: N$${amount.toFixed(2)}`
+      ).join('\n')}
+      
+      Instructions:
+      1. Analyze actual budget performance vs spending
+      2. Identify categories where spending is high relative to budget
+      3. Suggest specific budget adjustments based on actual spending patterns
+      4. Focus on categories that exist in the user's data
+      5. Provide actionable budget optimization tips
+    `;
+  } else if (financialData.requestType === 'investment_recommendations') {
+    prompt = `
+      Act as an expert financial advisor. Provide personalized investment recommendations based on the user's financial situation.
+      
+      Financial Data:
+      - Total Income: N$${financialData.income?.toFixed(2) || 0}
+      - Total Expenses: N$${financialData.expenses?.toFixed(2) || 0}
+      - Net Savings: N$${financialData.savings?.toFixed(2) || 0}
+      - Monthly Expenses: N$${financialData.monthlyExpenses?.toFixed(2) || 0}
+      
+      Spending Patterns:
+      ${Object.entries(financialData.spendingByCategory || {}).map(([category, amount]) => 
+        `- ${category}: N$${amount.toFixed(2)}`
+      ).join('\n')}
+      
+      Instructions:
+      1. Assess the user's current financial situation
+      2. Consider their actual spending patterns and savings rate
+      3. Provide investment recommendations based on their real financial data
+      4. Consider emergency fund needs before investment advice
+      5. Suggest appropriate investment strategies for their income level
+    `;
+  } else if (financialData.requestType === 'debt_strategy') {
+    prompt = `
+      Act as an expert financial advisor. Provide personalized debt management strategies based on the user's financial situation.
+      
+      Financial Data:
+      - Total Income: N$${financialData.income?.toFixed(2) || 0}
+      - Total Expenses: N$${financialData.expenses?.toFixed(2) || 0}
+      - Net Savings: N$${financialData.savings?.toFixed(2) || 0}
+      
+      Spending by Category:
+      ${Object.entries(financialData.spendingByCategory || {}).map(([category, amount]) => 
+        `- ${category}: N$${amount.toFixed(2)}`
+      ).join('\n')}
+      
+      Instructions:
+      1. Analyze the user's current financial situation
+      2. Identify potential areas for expense reduction based on actual spending
+      3. Suggest debt management strategies appropriate for their income and expenses
+      4. Focus on creating a sustainable debt payoff plan
+      5. Consider their actual spending patterns in recommendations
+    `;
+  } else {
+    // General financial insights
+    prompt = `
+      Act as an expert, friendly financial advisor. Analyze the user's actual financial data and provide personalized insights.
+      
+      IMPORTANT: Base your analysis ONLY on the actual transactions and data provided. Do NOT make assumptions about categories or spending patterns that are not present in the data.
+      
+      Financial Data Analysis:
+      - Total Income: N$${financialData.income?.toFixed(2) || 0}
+      - Total Expenses: N$${financialData.expenses?.toFixed(2) || 0}
+      - Net Savings: N$${financialData.savings?.toFixed(2) || 0}
+      - Total Transactions: ${financialData.totalTransactions || 0}
+      - Income Transactions: ${financialData.incomeTransactions || 0}
+      - Expense Transactions: ${financialData.expenseTransactions || 0}
+      
+      Spending by Category (ONLY mention categories that actually exist in the data):
+      ${Object.entries(financialData.spendingByCategory || {}).map(([category, amount]) => 
+        `- ${category}: N$${amount.toFixed(2)}`
+      ).join('\n')}
+      
+      Recent Transactions (last 30 days):
+      ${(financialData.recentTransactions || []).map(t => 
+        `- ${t.date}: ${t.description} (${t.category}) - N$${t.amount}`
+      ).join('\n')}
+      
+      Goals: ${financialData.goals?.length || 0} active goals
+      Budgets: ${financialData.budgets?.length || 0} budget categories
+      
+      Instructions:
+      1. Analyze ONLY the actual transaction data provided
+      2. If no transactions exist, acknowledge this and provide general financial advice
+      3. If specific categories exist in the data, mention them specifically
+      4. If no groceries, food, or restaurant transactions exist, DO NOT mention them
+      5. Focus on the user's actual spending patterns and categories
+      6. Provide actionable advice based on real data
+      7. Keep the tone positive and encouraging
+    `;
+  }
 
   try {
     const response: GenerateContentResponse = await ai!.models.generateContent({

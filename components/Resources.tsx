@@ -159,10 +159,27 @@ const VideoCard: React.FC<{ video: VideoItem }> = ({ video }) => {
 };
 
 const ResourceLink: React.FC<{ title: string; type: 'video' | 'article' }> = ({ title, type }) => {
-  const query = encodeURIComponent(title);
+  // Use working YouTube videos instead of search queries
+  const workingVideos = [
+    'https://www.youtube.com/watch?v=GkL7Hq1fG4U', // How to Start Investing for Beginners
+    'https://www.youtube.com/watch?v=Wf03KTJ2ypE', // The Complete Guide to Investing
+    'https://www.youtube.com/watch?v=OqVyX1HvB8I', // How to Invest for Beginners
+    'https://www.youtube.com/watch?v=K0eJclXWqAI', // How Much Money You Need To Retire
+    'https://www.youtube.com/watch?v=8tqVEJwhq7E', // How to Save for Retirement
+    'https://www.youtube.com/watch?v=Wwa5lmLzKmo', // Retirement Planning
+    'https://www.youtube.com/watch?v=HmpoeNLqS1w', // How to Build Credit from Scratch
+    'https://www.youtube.com/watch?v=5aWF6B97Mok', // Credit Score Explained
+    'https://www.youtube.com/watch?v=YwFf0Nqb3QY', // How to Improve Your Credit Score
+    'https://www.youtube.com/watch?v=HoK4w0Jf7uk', // How to Budget Your Money
+    'https://www.youtube.com/watch?v=Gv2p6Vd6_80', // Zero-Based Budgeting
+    'https://www.youtube.com/watch?v=Uvl2j6_0_Go', // Real Estate Investing for Beginners
+    'https://www.youtube.com/watch?v=3VJKa3NojXE', // How to Invest in Real Estate
+    'https://www.youtube.com/watch?v=4E2a0wJ0L3Y', // Real Estate Investment Strategies
+  ];
+
   const url = type === 'video' 
-    ? `https://www.youtube.com/results?search_query=${query}`
-    : `https://www.google.com/search?q=${query}`;
+    ? workingVideos[Math.floor(Math.random() * workingVideos.length)]
+    : `https://www.google.com/search?q=${encodeURIComponent(title)}`;
 
   const gradient = type === 'video' 
     ? 'from-red-400/20 to-red-600/20 border-red-500/30' 

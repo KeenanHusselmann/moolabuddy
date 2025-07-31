@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import type { Note } from '../types';
 import Card from './Card';
 import AlarmClockIcon from './icons/AlarmClockIcon';
+import { useToast } from './ToastContext';
 
 interface NotesProps {
   notes: Note[];
@@ -44,7 +45,7 @@ const EditNoteModal: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      alert("Note content cannot be empty.");
+      showToast("Note content cannot be empty.", "error");
       return;
     }
     const finalReminder = showReminder && reminderDateTime ? new Date(reminderDateTime).toISOString() : null;
@@ -130,6 +131,7 @@ const Notes: React.FC<NotesProps> = ({ notes, saveNote, deleteNote, updateNote }
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [showReminder, setShowReminder] = useState(false);
   const [reminderDateTime, setReminderDateTime] = useState('');
+  const { showToast } = useToast();
 
   const handleSave = () => {
     const reminderAt = showReminder && reminderDateTime ? new Date(reminderDateTime).toISOString() : null;
