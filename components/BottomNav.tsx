@@ -5,6 +5,7 @@ import ToolsIcon from './icons/ToolsIcon';
 import ReceiptsIcon from './icons/ReceiptsIcon';
 import NotesIcon from './icons/NotesIcon';
 import ProfileIcon from './icons/ProfileIcon';
+import AIIcon from './icons/AIIcon';
 
 interface BottomNavProps {
   activeView: View;
@@ -15,8 +16,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, navigateTo }) => {
   const navItems = [
     { view: 'Transactions' as View, label: 'Transactions', icon: <TransactionsIcon /> },
     { view: 'Tools' as View, label: 'Tools', icon: <ToolsIcon /> },
+    { view: 'AIAdvisor' as View, label: 'AI Advisor', icon: <AIIcon /> },
     { view: 'Receipts' as View, label: 'Receipts', icon: <ReceiptsIcon /> },
-    { view: 'Notes' as View, label: 'Notes', icon: <NotesIcon /> },
     { view: 'Profile' as View, label: 'Profile', icon: <ProfileIcon /> },
   ];
 

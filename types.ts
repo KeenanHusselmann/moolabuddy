@@ -1,5 +1,5 @@
 
-export type View = 'Dashboard' | 'Transactions' | 'Goals' | 'Projections' | 'Notes' | 'Resources' | 'Profile' | 'History' | 'Tools' | 'ShoppingList' | 'Receipts' | 'Stores';
+export type View = 'Dashboard' | 'Transactions' | 'Goals' | 'Projections' | 'Notes' | 'Resources' | 'Profile' | 'History' | 'Tools' | 'ShoppingList' | 'Receipts' | 'Stores' | 'AIAdvisor';
 
 export enum TransactionType {
   INCOME = 'Income',

@@ -18,6 +18,7 @@ import Tools from './components/Tools';
 import ShoppingListComponent from './components/ShoppingList';
 import ReceiptsComponent from './components/Receipts';
 import StoresComponent from './components/Stores';
+import AIAdvisor from './components/AIAdvisor';
 import LandingPage from './components/LandingPage';
 import BottomNav from './components/BottomNav';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -773,6 +774,8 @@ const App: React.FC = () => {
                   setStores={setStores}
                   transactions={transactions}
                 />;
+      case 'AIAdvisor':
+        return <AIAdvisor financialData={financialData} />;
       default:
         return <Dashboard financialData={financialData} costs={costs} />;
     }
