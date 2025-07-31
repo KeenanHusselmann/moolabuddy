@@ -1,14 +1,16 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import type { FinancialContent, AIInsight } from "../types";
 
-const API_KEY = process.env.API_KEY;
+// Support both API_KEY and GEMINI_API_KEY environment variables
+const API_KEY = process.env.API_KEY || process.env.GEMINI_API_KEY;
 
 if (!API_KEY) {
-  console.warn("API_KEY environment variable not set. Gemini API calls will be disabled.");
+  console.warn("API_KEY or GEMINI_API_KEY environment variable not set. Gemini API calls will be disabled.");
+  console.warn("Please create a .env.local file with your Gemini API key from https://aistudio.google.com/app/apikey");
 }
 
 // The API key is passed at initialization. The functions below will guard against making calls if the key is missing.
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 const insightSchema = {
     type: Type.OBJECT,
@@ -48,7 +50,7 @@ export const getFinancialInsights = async (financialData: any): Promise<AIInsigh
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai!.models.generateContent({
       model: model,
       contents: prompt,
       config: {
@@ -76,7 +78,7 @@ export const getProjectionAnalysis = async (projectionParams: any): Promise<stri
     `;
   
     try {
-      const response: GenerateContentResponse = await ai.models.generateContent({
+      const response: GenerateContentResponse = await ai!.models.generateContent({
           model: model,
           contents: prompt,
       });
@@ -97,7 +99,7 @@ export const getFinancialContent = async (topic: string): Promise<FinancialConte
   `;
 
   try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai!.models.generateContent({
       model: model,
       contents: prompt,
       config: {
