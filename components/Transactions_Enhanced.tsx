@@ -81,8 +81,8 @@ const EditTransactionModal: React.FC<{
           <div>
             <label className="block text-sm font-medium text-gray-300">Type</label>
             <div className="mt-1 flex rounded-md shadow-sm">
-              <button type="button" onClick={() => setType(TransactionType.EXPENSE)} className={`w-1/2 rounded-l-md px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors ${type === TransactionType.EXPENSE ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Expense</button>
-              <button type="button" onClick={() => setType(TransactionType.INCOME)} className={`w-1/2 rounded-r-md px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors ${type === TransactionType.INCOME ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Income</button>
+              <button type="button" onClick={() => setType(TransactionType.EXPENSE)} className={`w-1/2 rounded-l-md px-4 py-2 text-sm font-medium transition-colors ${type === TransactionType.EXPENSE ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Expense</button>
+              <button type="button" onClick={() => setType(TransactionType.INCOME)} className={`w-1/2 rounded-r-md px-4 py-2 text-sm font-medium transition-colors ${type === TransactionType.INCOME ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Income</button>
             </div>
           </div>
           <div className="flex gap-3 mt-6">
@@ -324,13 +324,13 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, addTransactio
           <div className="flex gap-2">
             <button
               onClick={() => setShowAnalytics(!showAnalytics)}
-              className="px-2 sm:px-4 py-1.5 sm:py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-xs sm:text-sm"
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm"
             >
               {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
             </button>
             <button
               onClick={clearFilters}
-              className="px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
             >
               Clear Filters
             </button>
@@ -452,20 +452,15 @@ const Transactions: React.FC<TransactionsProps> = ({ transactions, addTransactio
               <div className="lg:hidden space-y-3">
                 {filteredAndSortedTransactions.length > 0 ? filteredAndSortedTransactions.map(t => (
                   <Card key={t.id} className={`p-4 flex flex-col gap-2 shadow-lg border-l-4 ${t.type === TransactionType.INCOME ? 'border-green-500' : 'border-red-500'}`}>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-lg text-white block truncate">{t.description}</span>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 mt-1">
-                          <span className="truncate">{t.category}</span>
-                          <span>•</span>
-                          <span className="whitespace-nowrap">{new Date(t.date).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 text-left sm:text-right">
-                        <span className={`font-bold text-lg block ${t.type === TransactionType.INCOME ? 'text-green-400' : 'text-red-400'}`}>
-                          {t.type === TransactionType.INCOME ? '+' : '-'}N${t.amount.toFixed(2)}
-                        </span>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-lg text-white">{t.description}</span>
+                      <span className={`font-bold text-lg ${t.type === TransactionType.INCOME ? 'text-green-400' : 'text-red-400'}`}>
+                        {t.type === TransactionType.INCOME ? '+' : '-'}N${t.amount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-gray-400">
+                      <span>{t.category}</span>
+                      <span>{new Date(t.date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex gap-2 mt-2">
                       <button 

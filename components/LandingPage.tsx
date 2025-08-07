@@ -30,18 +30,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onComplete }) => {
       
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+        {/* Namibian-inspired colors: Blue, Red, Green, Gold */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-60 h-60 bg-green-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-yellow-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl"></div>
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 text-center">
-        {/* Namibian Flag */}
-        <div className="mb-4 text-4xl animate-bounce">
-          🇳🇦
-        </div>
-
         {/* Logo */}
         <div className="mb-8">
           <div className="relative inline-block animate-float">
@@ -51,7 +49,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onComplete }) => {
               <img 
                 src="/logo2.png" 
                 alt="MoolaBuddy Logo" 
-                className="w-32 h-32 object-contain"
+                className="w-32 h-32 object-contain rounded-2xl"
                 onError={(e) => {
                   // Fallback if logo2.png doesn't exist
                   console.warn('Logo2 not found, using fallback');
@@ -73,8 +71,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onComplete }) => {
         </h1>
         
         {/* Tagline */}
-        <p className="text-xl md:text-2xl text-gray-300 mb-8 font-light animate-float" style={{ animationDelay: '1s' }}>
+        <p className="text-xl md:text-2xl text-gray-300 mb-2 font-light animate-float" style={{ animationDelay: '1s' }}>
           Your Smart Finance Buddy
+        </p>
+        
+        {/* Namibian Subtitle */}
+        <p className="text-lg text-brand-300 mb-8 font-medium animate-float" style={{ animationDelay: '1.2s' }}>
+          Built for Namibian Budgets & Dreams
         </p>
 
         {/* Loading Animation */}
@@ -107,8 +110,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onComplete }) => {
       </div>
 
       {/* Bottom Text */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-gray-400 text-sm">
-        © 2024 MoolaBuddy
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+        <div className="text-gray-400 text-sm mb-1">
+          © 2025 MoolaBuddy
+        </div>
+        <div className="text-gray-500 text-xs">
+          Empowering Financial Freedom in Namibia
+        </div>
       </div>
     </div>
   );

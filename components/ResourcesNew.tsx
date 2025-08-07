@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Card } from './Card';
 import { getFinancialContent } from '../services/geminiService';
 
 interface FinancialContent {
@@ -262,32 +263,32 @@ const Resources: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-3 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
-        <div className="text-center mb-8 sm:mb-12">
+        <div className="text-center mb-12">
           <div className="relative inline-block">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4">
               Learning Resources
             </h1>
             <div className="absolute -inset-1 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg blur opacity-30 animate-pulse"></div>
           </div>
-          <p className="text-sm sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
             Enhance your financial literacy with our curated collection of educational content and AI-powered insights
           </p>
           
           {/* Stats Bar */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-6 sm:mt-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-6 py-2 sm:py-3 border border-white/20">
-              <div className="text-lg sm:text-2xl font-bold text-green-400">50+</div>
-              <div className="text-xs sm:text-sm text-gray-300">Video Tutorials</div>
+          <div className="flex flex-wrap justify-center gap-6 mt-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/20">
+              <div className="text-2xl font-bold text-green-400">50+</div>
+              <div className="text-sm text-gray-300">Video Tutorials</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-6 py-2 sm:py-3 border border-white/20">
-              <div className="text-lg sm:text-2xl font-bold text-blue-400">AI</div>
-              <div className="text-xs sm:text-sm text-gray-300">Powered Tips</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/20">
+              <div className="text-2xl font-bold text-blue-400">AI</div>
+              <div className="text-sm text-gray-300">Powered Tips</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-6 py-2 sm:py-3 border border-white/20">
-              <div className="text-lg sm:text-2xl font-bold text-purple-400">24/7</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/20">
+              <div className="text-2xl font-bold text-purple-400">24/7</div>
               <div className="text-sm text-gray-300">Available</div>
             </div>
           </div>

@@ -1,40 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from './Card';
-import type { UserProfile, Budget, Transaction, View } from '../types';
+import type { UserProfile, Budget, Transaction } from '../types';
 import { TransactionType } from '../types';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { useToast } from './ToastContext';
-
-// Helper function to calculate next pay date based on frequency
-const calculateNextPayDate = (currentDate: string, frequency: string): string => {
-    const current = new Date(currentDate);
-    const next = new Date(current);
-    
-    switch (frequency) {
-        case 'weekly':
-            next.setDate(current.getDate() + 7);
-            break;
-        case 'bi-weekly':
-            next.setDate(current.getDate() + 14);
-            break;
-        case 'semi-monthly':
-            // Semi-monthly: if current date is 1st-15th, next is 15th, else next month 1st
-            if (current.getDate() <= 15) {
-                next.setDate(15);
-            } else {
-                next.setMonth(current.getMonth() + 1);
-                next.setDate(1);
-            }
-            break;
-        case 'monthly':
-            next.setMonth(current.getMonth() + 1);
-            break;
-        default:
-            return currentDate;
-    }
-    
-    return next.toISOString().split('T')[0];
-};
 
 interface ProfileProps {
     profile: UserProfile;
@@ -45,21 +14,16 @@ interface ProfileProps {
     transactions: Transaction[];
     exportData: () => Promise<void>;
     resetAllData: () => void;
-    addTransaction?: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
-    navigateToView?: (view: View) => void;
-    onAddIncome?: () => void;
-    onAddExpense?: () => void;
-    onSetGoal?: () => void;
 }
 
 // Achievement system
 const ACHIEVEMENTS = [
-    { id: 'first_transaction', name: 'First Step', description: 'Added your first transaction', color: 'from-green-500 to-emerald-600' },
-    { id: 'budget_master', name: 'Budget Master', description: 'Created 5 budgets', color: 'from-blue-500 to-indigo-600' },
-    { id: 'saver', name: 'Super Saver', description: 'Saved 20% of income', color: 'from-purple-500 to-violet-600' },
-    { id: 'consistent', name: 'Consistency King', description: 'Used app for 30 days', color: 'from-yellow-500 to-orange-600' },
-    { id: 'goal_setter', name: 'Goal Setter', description: 'Set your first financial goal', color: 'from-pink-500 to-rose-600' },
-    { id: 'budget_keeper', name: 'Budget Keeper', description: 'Stayed under budget for 3 months', color: 'from-cyan-500 to-teal-600' },
+    { id: 'first_transaction', name: 'First Step', description: 'Added your first transaction', icon: '🎯', color: 'from-green-500 to-emerald-600' },
+    { id: 'budget_master', name: 'Budget Master', description: 'Created 5 budgets', icon: '💼', color: 'from-blue-500 to-indigo-600' },
+    { id: 'saver', name: 'Super Saver', description: 'Saved 20% of income', icon: '💰', color: 'from-purple-500 to-violet-600' },
+    { id: 'consistent', name: 'Consistency King', description: 'Used app for 30 days', icon: '⭐', color: 'from-yellow-500 to-orange-600' },
+    { id: 'goal_setter', name: 'Goal Setter', description: 'Set your first financial goal', icon: '🎊', color: 'from-pink-500 to-rose-600' },
+    { id: 'budget_keeper', name: 'Budget Keeper', description: 'Stayed under budget for 3 months', icon: '🏆', color: 'from-cyan-500 to-teal-600' },
 ];
 
 const BudgetRow: React.FC<{ budget: Budget; transactions: Transaction[], onDelete: (id: string) => void }> = ({ budget, transactions, onDelete }) => {
@@ -133,10 +97,11 @@ const BudgetRow: React.FC<{ budget: Budget; transactions: Transaction[], onDelet
     );
 };
 
-const StatCard: React.FC<{ title: string; value: string; subtitle: string; color: string }> = ({ title, value, subtitle, color }) => (
+const StatCard: React.FC<{ title: string; value: string; subtitle: string; color: string; icon?: string }> = ({ title, value, subtitle, color, icon }) => (
     <Card className={`p-4 ${color} hover:scale-105 transition-all duration-300 group relative overflow-hidden`}>
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="text-center relative z-10">
+            {icon && <div className="text-2xl mb-2">{icon}</div>}
             <h3 className="text-sm font-medium text-gray-300 mb-2">{title}</h3>
             <p className="text-xl font-bold text-white mb-1 break-words">{value}</p>
             <p className="text-xs text-gray-400">{subtitle}</p>
@@ -151,12 +116,8 @@ const AchievementCard: React.FC<{ achievement: any; unlocked: boolean }> = ({ ac
             : 'bg-gray-800/50 border-gray-700/50 opacity-60'
     }`}>
         <div className="text-center">
-            <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                unlocked ? `bg-gradient-to-br ${achievement.color}` : 'bg-gray-600'
-            }`}>
-                <span className="text-white font-bold">
-                    {achievement.name.charAt(0)}
-                </span>
+            <div className={`text-3xl mb-2 ${unlocked ? 'animate-pulse' : 'grayscale'}`}>
+                {achievement.icon}
             </div>
             <h3 className="font-semibold text-white text-sm mb-1">{achievement.name}</h3>
             <p className="text-xs text-gray-400">{achievement.description}</p>
@@ -171,125 +132,13 @@ const AchievementCard: React.FC<{ achievement: any; unlocked: boolean }> = ({ ac
     </div>
 );
 
-const Profile: React.FC<ProfileProps> = ({ 
-    profile, 
-    setProfile, 
-    budgets, 
-    addBudget, 
-    deleteBudget, 
-    transactions, 
-    exportData, 
-    resetAllData,
-    addTransaction,
-    navigateToView,
-    onAddIncome,
-    onAddExpense,
-    onSetGoal
-}) => {
+const Profile: React.FC<ProfileProps> = ({ profile, setProfile, budgets, addBudget, deleteBudget, transactions, exportData, resetAllData }) => {
     const [currentProfile, setCurrentProfile] = useState(profile);
     const [newBudgetName, setNewBudgetName] = useState('');
     const [newBudgetLimit, setNewBudgetLimit] = useState('');
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
-    const [showIncomeForm, setShowIncomeForm] = useState(false);
-    const [showExpenseForm, setShowExpenseForm] = useState(false);
-    const [incomeData, setIncomeData] = useState({
-        description: '',
-        amount: '',
-        category: 'Salary'
-    });
-    const [expenseData, setExpenseData] = useState({
-        description: '',
-        amount: '',
-        category: 'Food & Dining'
-    });
     const { showToast } = useToast();
-
-    // Check for upcoming pay dates
-    useEffect(() => {
-        if (profile.nextPayDate) {
-            const today = new Date();
-            const payDate = new Date(profile.nextPayDate);
-            const diffTime = payDate.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            // Notify if pay day is tomorrow or today
-            if (diffDays === 1) {
-                showToast('Pay day is tomorrow! 💰', 'info');
-            } else if (diffDays === 0) {
-                showToast('Pay day is today! 🎉', 'success');
-            }
-        }
-    }, [profile.nextPayDate, showToast]);
-
-    // Income categories
-    const incomeCategories = ['Salary', 'Freelance', 'Business', 'Investment', 'Bonus', 'Gift', 'Other'];
-    
-    // Expense categories
-    const expenseCategories = ['Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'];
-
-    // Quick Action handlers
-    const handleAddIncome = () => {
-        setShowIncomeForm(true);
-    };
-
-    const handleSubmitIncome = () => {
-        if (!incomeData.description.trim() || !incomeData.amount || parseFloat(incomeData.amount) <= 0) {
-            showToast('Please fill in all income details with a valid amount', 'error');
-            return;
-        }
-
-        if (addTransaction) {
-            const newTransaction = {
-                description: incomeData.description.trim(),
-                amount: parseFloat(incomeData.amount),
-                type: TransactionType.INCOME,
-                category: incomeData.category,
-            };
-            addTransaction(newTransaction);
-            showToast(`Income of N$${parseFloat(incomeData.amount).toLocaleString()} added successfully!`, 'success');
-            
-            // Reset form
-            setIncomeData({ description: '', amount: '', category: 'Salary' });
-            setShowIncomeForm(false);
-        }
-    };
-
-    const handleTrackExpense = () => {
-        setShowExpenseForm(true);
-    };
-
-    const handleSubmitExpense = () => {
-        if (!expenseData.description.trim() || !expenseData.amount || parseFloat(expenseData.amount) <= 0) {
-            showToast('Please fill in all expense details with a valid amount', 'error');
-            return;
-        }
-
-        if (addTransaction) {
-            const newTransaction = {
-                description: expenseData.description.trim(),
-                amount: parseFloat(expenseData.amount),
-                type: TransactionType.EXPENSE,
-                category: expenseData.category,
-            };
-            addTransaction(newTransaction);
-            showToast(`Expense of N$${parseFloat(expenseData.amount).toLocaleString()} recorded successfully!`, 'success');
-            
-            // Reset form
-            setExpenseData({ description: '', amount: '', category: 'Food & Dining' });
-            setShowExpenseForm(false);
-        }
-    };
-
-    const handleSetGoal = () => {
-        if (onSetGoal) {
-            onSetGoal();
-        } else if (navigateToView) {
-            navigateToView('Goals');
-        } else {
-            showToast('Navigate to Goals to set financial goals', 'info');
-        }
-    };
 
     // Check for budget overruns and send notifications
     useEffect(() => {
@@ -418,34 +267,37 @@ const Profile: React.FC<ProfileProps> = ({
     }, [transactions, budgets]);
 
     const tabs = [
-        { id: 'overview', name: 'Overview' },
-        { id: 'achievements', name: 'Achievements' },
-        { id: 'budgets', name: 'Budgets' },
-        { id: 'settings', name: 'Settings' }
+        { id: 'overview', name: 'Overview', icon: '📊' },
+        { id: 'achievements', name: 'Achievements', icon: '🏆' },
+        { id: 'budgets', name: 'Budgets', icon: '💼' },
+        { id: 'settings', name: 'Settings', icon: '⚙️' }
     ];
     
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-3 sm:p-4">
-            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-4">
+            <div className="max-w-7xl mx-auto space-y-6">
                 {/* Enhanced Header */}
-                <div className="text-center mb-6 sm:mb-8">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
-                        Profile Management
-                    </h1>
-                    <p className="text-sm sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
+                <div className="text-center mb-8">
+                    <div className="relative inline-block">
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4">
+                            Profile Center
+                        </h1>
+                        <div className="absolute -inset-1 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg blur opacity-30 animate-pulse"></div>
+                    </div>
+                    <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
                         Manage your financial profile, track achievements, and customize your experience
                     </p>
                 </div>
 
                 {/* Professional Profile Header */}
-                <Card className="p-4 sm:p-6 md:p-8 bg-gradient-to-br from-brand-500/20 to-purple-500/20 border border-brand-500/30 relative overflow-hidden">
+                <Card className="p-8 bg-gradient-to-br from-brand-500/20 to-purple-500/20 border border-brand-500/30 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-600/10 to-purple-600/10"></div>
                     <div className="relative z-10 flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
                         <div className="relative">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-brand-500 to-purple-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20">
-                                <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{profile.name.charAt(0).toUpperCase()}</span>
+                            <div className="w-24 h-24 bg-gradient-to-br from-brand-500 to-purple-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20">
+                                <span className="text-4xl font-bold text-white">{profile.name.charAt(0).toUpperCase()}</span>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full border-4 border-gray-900 flex items-center justify-center">
+                            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-gray-900 flex items-center justify-center">
                                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
@@ -480,63 +332,6 @@ const Profile: React.FC<ProfileProps> = ({
                     </div>
                 </Card>
 
-                {/* Pay Schedule Info */}
-                {(profile.nextPayDate || profile.payFrequency || profile.payAmount) && (
-                    <Card className="p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 className="text-white font-semibold">Next Payday</h3>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-gray-300">
-                                        {profile.nextPayDate && (
-                                            <span className="flex items-center gap-1">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                {new Date(profile.nextPayDate).toLocaleDateString()}
-                                            </span>
-                                        )}
-                                        {profile.payFrequency && (
-                                            <span className="capitalize">{profile.payFrequency.replace('-', ' ')}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            {profile.payAmount && (
-                                <div className="text-right">
-                                    <div className="text-2xl font-bold text-green-400">N${profile.payAmount.toLocaleString()}</div>
-                                    <div className="text-xs text-gray-400">Expected Amount</div>
-                                </div>
-                            )}
-                        </div>
-                        {profile.nextPayDate && (
-                            <div className="mt-3 text-xs text-gray-400">
-                                {(() => {
-                                    const today = new Date();
-                                    const payDate = new Date(profile.nextPayDate);
-                                    const diffTime = payDate.getTime() - today.getTime();
-                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                    
-                                    if (diffDays < 0) {
-                                        return `Pay date was ${Math.abs(diffDays)} days ago`;
-                                    } else if (diffDays === 0) {
-                                        return 'Pay day is today! 🎉';
-                                    } else if (diffDays === 1) {
-                                        return 'Pay day is tomorrow!';
-                                    } else {
-                                        return `${diffDays} days until pay day`;
-                                    }
-                                })()}
-                            </div>
-                        )}
-                    </Card>
-                )}
-
                 {/* Enhanced Tab Navigation */}
                 <div className="flex flex-wrap justify-center gap-2 mb-8">
                     {tabs.map((tab) => (
@@ -549,6 +344,7 @@ const Profile: React.FC<ProfileProps> = ({
                                     : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border-2 border-transparent hover:border-white/30 backdrop-blur-sm'
                             }`}
                         >
+                            <span>{tab.icon}</span>
                             {tab.name}
                         </button>
                     ))}
@@ -564,24 +360,28 @@ const Profile: React.FC<ProfileProps> = ({
                                 value={`N$${stats.totalIncome.toFixed(2)}`} 
                                 subtitle="This month"
                                 color="bg-gradient-to-br from-green-500/20 to-emerald-600/20 border border-green-500/30"
+                                icon="💰"
                             />
                             <StatCard 
                                 title="Total Expenses" 
                                 value={`N$${stats.totalExpenses.toFixed(2)}`} 
                                 subtitle="This month"
                                 color="bg-gradient-to-br from-red-500/20 to-rose-600/20 border border-red-500/30"
+                                icon="💸"
                             />
                             <StatCard 
                                 title="Savings Rate" 
                                 value={`${stats.savingsRate.toFixed(1)}%`} 
                                 subtitle="This month"
                                 color="bg-gradient-to-br from-purple-500/20 to-violet-600/20 border border-purple-500/30"
+                                icon="📈"
                             />
                             <StatCard 
                                 title="Active Budgets" 
                                 value={stats.budgetCount.toString()} 
                                 subtitle="Categories"
                                 color="bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30"
+                                icon="📊"
                             />
                         </div>
 
@@ -589,38 +389,23 @@ const Profile: React.FC<ProfileProps> = ({
                         <Card className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-600/50">
                             <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <button 
-                                    onClick={handleAddIncome}
-                                    className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-600/20 border border-green-500/30 rounded-xl hover:scale-105 transition-all duration-300 group"
-                                >
+                                <button className="p-4 bg-gradient-to-br from-green-500/20 to-emerald-600/20 border border-green-500/30 rounded-xl hover:scale-105 transition-all duration-300 group">
                                     <div className="text-center">
-                                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                                            <span className="text-white font-bold">+</span>
-                                        </div>
+                                        <div className="text-3xl mb-2 group-hover:animate-bounce">💰</div>
                                         <h3 className="font-semibold text-white">Add Income</h3>
                                         <p className="text-xs text-gray-400">Record new income</p>
                                     </div>
                                 </button>
-                                <button 
-                                    onClick={handleTrackExpense}
-                                    className="p-4 bg-gradient-to-br from-red-500/20 to-rose-600/20 border border-red-500/30 rounded-xl hover:scale-105 transition-all duration-300 group"
-                                >
+                                <button className="p-4 bg-gradient-to-br from-red-500/20 to-rose-600/20 border border-red-500/30 rounded-xl hover:scale-105 transition-all duration-300 group">
                                     <div className="text-center">
-                                        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                                            <span className="text-white font-bold">-</span>
-                                        </div>
+                                        <div className="text-3xl mb-2 group-hover:animate-bounce">💸</div>
                                         <h3 className="font-semibold text-white">Track Expense</h3>
                                         <p className="text-xs text-gray-400">Log new expense</p>
                                     </div>
                                 </button>
-                                <button 
-                                    onClick={handleSetGoal}
-                                    className="p-4 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 rounded-xl hover:scale-105 transition-all duration-300 group"
-                                >
+                                <button className="p-4 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 rounded-xl hover:scale-105 transition-all duration-300 group">
                                     <div className="text-center">
-                                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                                            <span className="text-white font-bold">★</span>
-                                        </div>
+                                        <div className="text-3xl mb-2 group-hover:animate-bounce">🎯</div>
                                         <h3 className="font-semibold text-white">Set Goal</h3>
                                         <p className="text-xs text-gray-400">Create financial goal</p>
                                     </div>
@@ -634,6 +419,7 @@ const Profile: React.FC<ProfileProps> = ({
                     <div className="space-y-6">
                         <Card className="p-6 bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border border-yellow-500/30">
                             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="text-2xl">🏆</span>
                                 Achievements & Milestones
                             </h2>
                             <div className="mb-6">
@@ -669,6 +455,7 @@ const Profile: React.FC<ProfileProps> = ({
                         {/* Enhanced Budget Management */}
                         <Card className="p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border border-blue-500/30">
                             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="text-2xl">💼</span>
                                 Monthly Budget Planning
                             </h2>
                             <div className="space-y-6">
@@ -710,9 +497,7 @@ const Profile: React.FC<ProfileProps> = ({
                                         <BudgetRow key={b.id} budget={b} transactions={transactions} onDelete={deleteBudget} />
                                     )) : (
                                         <div className="text-center py-12">
-                                            <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <span className="text-2xl text-blue-400">B</span>
-                                            </div>
+                                            <div className="text-6xl mb-4">💼</div>
                                             <p className="text-gray-400 text-lg">No budgets set yet</p>
                                             <p className="text-gray-500 text-sm">Add your first budget to start tracking your spending!</p>
                                         </div>
@@ -728,6 +513,7 @@ const Profile: React.FC<ProfileProps> = ({
                         {/* Professional Profile Settings */}
                         <Card className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-600/50">
                             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="text-2xl">⚙️</span>
                                 Profile Settings
                             </h2>
                             <form onSubmit={handleProfileSave} className="space-y-4">
@@ -753,78 +539,6 @@ const Profile: React.FC<ProfileProps> = ({
                                         placeholder="Your financial philosophy" 
                                     />
                                 </div>
-
-                                {/* Pay Schedule Section */}
-                                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-600/30">
-                                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                        </svg>
-                                        Pay Schedule
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label htmlFor="payFrequency" className="block text-sm font-medium text-gray-300 mb-2">Pay Frequency</label>
-                                            <select 
-                                                id="payFrequency" 
-                                                value={currentProfile.payFrequency || ''} 
-                                                onChange={e => setCurrentProfile({...currentProfile, payFrequency: e.target.value as any})}
-                                                className="block w-full bg-gray-700/70 border border-gray-600/50 rounded-xl shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200"
-                                            >
-                                                <option value="">Select pay frequency</option>
-                                                <option value="weekly">Weekly</option>
-                                                <option value="bi-weekly">Bi-weekly (Every 2 weeks)</option>
-                                                <option value="semi-monthly">Semi-monthly (Twice a month)</option>
-                                                <option value="monthly">Monthly</option>
-                                                <option value="custom">Custom</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label htmlFor="nextPayDate" className="block text-sm font-medium text-gray-300 mb-2">Next Pay Date</label>
-                                            <div className="flex gap-2">
-                                                <input 
-                                                    type="date" 
-                                                    id="nextPayDate" 
-                                                    value={currentProfile.nextPayDate || ''} 
-                                                    onChange={e => setCurrentProfile({...currentProfile, nextPayDate: e.target.value})}
-                                                    className="flex-1 bg-gray-700/70 border border-gray-600/50 rounded-xl shadow-sm py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200" 
-                                                />
-                                                {currentProfile.payFrequency && currentProfile.nextPayDate && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const nextDate = calculateNextPayDate(currentProfile.nextPayDate!, currentProfile.payFrequency!);
-                                                            setCurrentProfile({...currentProfile, nextPayDate: nextDate});
-                                                        }}
-                                                        className="px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm whitespace-nowrap"
-                                                        title="Calculate next pay date"
-                                                    >
-                                                        Next →
-                                                    </button>
-                                                )}
-                                            </div>
-                                            {currentProfile.payFrequency && (
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    Based on {currentProfile.payFrequency.replace('-', ' ')} schedule
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label htmlFor="payAmount" className="block text-sm font-medium text-gray-300 mb-2">Pay Amount (N$)</label>
-                                            <input 
-                                                type="number" 
-                                                id="payAmount" 
-                                                step="0.01"
-                                                min="0"
-                                                value={currentProfile.payAmount || ''} 
-                                                onChange={e => setCurrentProfile({...currentProfile, payAmount: parseFloat(e.target.value) || undefined})}
-                                                className="block w-full bg-gray-700/70 border border-gray-600/50 rounded-xl shadow-sm py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200" 
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <button 
                                     type="submit" 
                                     className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold rounded-xl hover:from-brand-700 hover:to-brand-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
@@ -839,7 +553,8 @@ const Profile: React.FC<ProfileProps> = ({
 
                         {/* Professional Data Management */}
                         <Card className="p-6 bg-gradient-to-br from-green-500/10 to-red-500/10 border border-gray-600/50">
-                            <h2 className="text-2xl font-bold text-white mb-6">
+                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="text-2xl">🗃️</span>
                                 Data Management
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -868,173 +583,13 @@ const Profile: React.FC<ProfileProps> = ({
                             </div>
                             {showResetConfirm && (
                                 <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
-                                    <p className="text-red-400 text-sm text-center font-medium">This action cannot be undone!</p>
+                                    <p className="text-red-400 text-sm text-center font-medium">⚠️ This action cannot be undone!</p>
                                 </div>
                             )}
                         </Card>
                     </div>
                 )}
             </div>
-
-            {/* Income Form Modal */}
-            {showIncomeForm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-md shadow-2xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                </div>
-                                Add Income
-                            </h3>
-                            <button 
-                                onClick={() => setShowIncomeForm(false)}
-                                className="text-gray-400 hover:text-white p-2 hover:bg-gray-800 rounded-full transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                                <input
-                                    type="text"
-                                    value={incomeData.description}
-                                    onChange={(e) => setIncomeData({...incomeData, description: e.target.value})}
-                                    placeholder="e.g., Monthly salary, Freelance payment"
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Amount (N$)</label>
-                                <input
-                                    type="number"
-                                    value={incomeData.amount}
-                                    onChange={(e) => setIncomeData({...incomeData, amount: e.target.value})}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                                <select
-                                    value={incomeData.category}
-                                    onChange={(e) => setIncomeData({...incomeData, category: e.target.value})}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                                >
-                                    {incomeCategories.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => setShowIncomeForm(false)}
-                                className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSubmitIncome}
-                                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
-                            >
-                                Add Income
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Expense Form Modal */}
-            {showExpenseForm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-md shadow-2xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <div className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
-                                    </svg>
-                                </div>
-                                Track Expense
-                            </h3>
-                            <button 
-                                onClick={() => setShowExpenseForm(false)}
-                                className="text-gray-400 hover:text-white p-2 hover:bg-gray-800 rounded-full transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                                <input
-                                    type="text"
-                                    value={expenseData.description}
-                                    onChange={(e) => setExpenseData({...expenseData, description: e.target.value})}
-                                    placeholder="e.g., Lunch, Gas, Groceries"
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Amount (N$)</label>
-                                <input
-                                    type="number"
-                                    value={expenseData.amount}
-                                    onChange={(e) => setExpenseData({...expenseData, amount: e.target.value})}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                                <select
-                                    value={expenseData.category}
-                                    onChange={(e) => setExpenseData({...expenseData, category: e.target.value})}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                >
-                                    {expenseCategories.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => setShowExpenseForm(false)}
-                                className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSubmitExpense}
-                                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
-                            >
-                                Add Expense
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 };

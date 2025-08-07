@@ -15,6 +15,7 @@ import Resources from './components/Resources';
 import Profile from './components/Profile';
 import History from './components/History';
 import Tools from './components/Tools';
+import FinancialTools from './components/FinancialTools';
 import ShoppingListComponent from './components/ShoppingList';
 import ReceiptsComponent from './components/Receipts';
 import StoresComponent from './components/Stores';
@@ -84,6 +85,15 @@ const AppContent: React.FC = () => {
     setActiveView(view);
     setNavigationStack(prev => [...prev, view]);
     setSidebarOpen(false); // Always close sidebar on navigation
+    
+    // Scroll to top when navigating to a new page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Also scroll the main content area to top
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const goBack = () => {
@@ -189,7 +199,7 @@ const AppContent: React.FC = () => {
     const setupNotifications = async () => {
       try {
         // Initialize notification service
-        await NotificationService.initializeNotifications();
+        await NotificationService.initialize();
         
         // Request permissions on app start
         let permissions = await LocalNotifications.checkPermissions();
@@ -274,6 +284,19 @@ const AppContent: React.FC = () => {
     };
 
     setupNotifications();
+  }, []);
+
+  // Handle custom navigation events from Dashboard empty states
+  useEffect(() => {
+    const handleNavigateToTransactions = () => {
+      navigateTo('Transactions');
+    };
+
+    window.addEventListener('navigate-to-transactions', handleNavigateToTransactions);
+
+    return () => {
+      window.removeEventListener('navigate-to-transactions', handleNavigateToTransactions);
+    };
   }, []);
   
   // Notification Management
@@ -770,12 +793,28 @@ const AppContent: React.FC = () => {
   };
 
   const financialData = useMemo(() => {
-    const income = transactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
-    const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+    // Get current month transactions
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const currentMonthTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    });
+    
+    // Calculate current month income and expenses
+    const income = currentMonthTransactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
+    const expenses = currentMonthTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
     const savings = income - expenses;
     
-    // Calculate spending by category
-    const spendingByCategory = transactions
+    // Calculate total lifetime amounts for other purposes
+    const totalIncome = transactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+    
+    // Calculate spending by category (current month only)
+    const spendingByCategory = currentMonthTransactions
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((acc, t) => {
         const category = t.category.toLowerCase();
@@ -790,20 +829,16 @@ const AppContent: React.FC = () => {
       new Date(t.date) >= thirtyDaysAgo
     );
     
-    // Calculate monthly averages
-    const monthlyIncome = income * 12 / 365 * 30; // Estimate monthly income
-    const monthlyExpenses = expenses * 12 / 365 * 30; // Estimate monthly expenses
-    
     return {
       transactions,
       goals,
-      income,
-      expenses,
+      income, // Current month income
+      expenses, // Current month expenses
       savings,
+      totalIncome, // Lifetime income
+      totalExpenses, // Lifetime expenses
       spendingByCategory,
       recentTransactions,
-      monthlyIncome,
-      monthlyExpenses,
       totalTransactions: transactions.length,
       incomeTransactions: transactions.filter(t => t.type === TransactionType.INCOME).length,
       expenseTransactions: transactions.filter(t => t.type === TransactionType.EXPENSE).length,
@@ -817,7 +852,7 @@ const AppContent: React.FC = () => {
   const renderView = () => {
     switch (activeView) {
       case 'Dashboard':
-        return <Dashboard financialData={financialData} costs={costs} />;
+        return <Dashboard financialData={financialData} costs={costs} addTransaction={addTransaction} addGoal={addGoal} />;
       case 'Transactions':
         return <Transactions 
                     transactions={transactions} 
@@ -846,6 +881,14 @@ const AppContent: React.FC = () => {
                   income={incomeForTool} 
                   setIncome={setIncomeForTool}
                />;
+      case 'FinancialTools':
+        return <FinancialTools 
+                  costs={costs} 
+                  addCost={addCost} 
+                  deleteCost={deleteCost} 
+                  income={incomeForTool} 
+                  setIncome={setIncomeForTool}
+               />;
       case 'History':
         return <History 
                   archive={archive} 
@@ -862,6 +905,8 @@ const AppContent: React.FC = () => {
                   transactions={transactions}
                   exportData={exportData}
                   resetAllData={resetAllData}
+                  addTransaction={addTransaction}
+                  navigateToView={navigateTo}
                 />;
       case 'ShoppingList':
         return <ShoppingListComponent
@@ -890,7 +935,7 @@ const AppContent: React.FC = () => {
       case 'AIAdvisor':
         return <AIAdvisor financialData={financialData} />;
       default:
-        return <Dashboard financialData={financialData} costs={costs} />;
+        return <Dashboard financialData={financialData} costs={costs} addTransaction={addTransaction} addGoal={addGoal} />;
     }
   };
 
@@ -901,7 +946,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-gray-900 text-gray-200 safe-area-inset">
-      {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-20 lg:hidden"></div>}
       <Sidebar 
         activeView={activeView} 
         navigateTo={navigateTo} 

@@ -1,5 +1,5 @@
 
-export type View = 'Dashboard' | 'Transactions' | 'Goals' | 'Projections' | 'Notes' | 'Resources' | 'Profile' | 'History' | 'Tools' | 'ShoppingList' | 'Receipts' | 'Stores' | 'AIAdvisor';
+export type View = 'Dashboard' | 'Transactions' | 'Goals' | 'Projections' | 'Notes' | 'Resources' | 'Profile' | 'History' | 'Tools' | 'FinancialTools' | 'ShoppingList' | 'Receipts' | 'Stores' | 'AIAdvisor';
 
 export enum TransactionType {
   INCOME = 'Income',
@@ -29,6 +29,9 @@ export interface Note {
   createdAt: string;
   reminderAt?: string | null;
   notificationId?: number | null;
+  isRecurring?: boolean;
+  recurringType?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  recurringDay?: number | null; // For weekly (0-6, Sunday=0) or monthly (1-31)
 }
 
 export interface Projection {
@@ -49,6 +52,9 @@ export interface FinancialContent {
 export interface UserProfile {
     name: string;
     motto: string;
+    payFrequency?: 'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly' | 'custom';
+    nextPayDate?: string;
+    payAmount?: number;
 }
 
 export interface Budget {
