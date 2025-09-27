@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MoolaBuddy</string>
+    <string name="title_activity_main">MoolaBuddy</string>
+    <string name="package_name">com.moolabuddy.app</string>
+    <string name="custom_url_scheme">com.moolabuddy.app</string>
+    <string name="app_description">Your Smart Finance Buddy - A comprehensive personal finance management app with AI-powered insights, budget tracking, and financial goal setting.</string>
+</resources>

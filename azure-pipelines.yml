@@ -1,0 +1,46 @@
+trigger:
+- main
+- develop
+
+pool:
+  vmImage: 'macOS-latest'
+
+variables:
+  NODE_VERSION: '18'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: $(NODE_VERSION)
+  displayName: 'Install Node.js'
+
+- script: |
+    npm ci
+  displayName: 'Install dependencies'
+
+- script: |
+    npm run build
+  displayName: 'Build web assets'
+
+- script: |
+    npm install -g @capacitor/cli
+    npx cap add ios
+    npx cap sync ios
+  displayName: 'Setup iOS platform'
+
+- script: |
+    cd ios/App
+    pod install
+  displayName: 'Install CocoaPods'
+
+- script: |
+    cd ios/App
+    xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath App.xcarchive archive
+    xcodebuild -exportArchive -archivePath App.xcarchive -exportPath ./build -exportOptionsPlist exportOptions.plist
+  displayName: 'Build iOS app'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'ios/App/build'
+    artifactName: 'ios-app'
+  displayName: 'Publish iOS app' 
