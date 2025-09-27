@@ -1,21 +1,21 @@
-# 💰 MoolaBuddy - Your Smart Finance Buddy
+#  MoolaBuddy - Your Smart Finance Buddy
 
 MoolaBuddy is a comprehensive financial management mobile application built with React, TypeScript, and Capacitor. It features AI-powered financial advice, expense tracking, goal setting, and comprehensive financial tools to help users manage their money effectively.
 
-## ✨ Features
+##  Features
 
-- 🤖 **AI Financial Advisor** - Get personalized financial advice using Google's Gemini AI
-- 📊 **Dashboard** - Comprehensive overview of your financial status
-- 💳 **Transaction Management** - Track and categorize your expenses and income
-- 🎯 **Goal Setting** - Set and track your financial goals
-- 📱 **Receipt Scanner** - Capture and organize receipts using device camera
-- 🛒 **Shopping Lists** - Manage your shopping with budget tracking
-- 📈 **Financial Projections** - Visualize your financial future
-- 🏪 **Store Management** - Track spending by store/merchant
-- 📝 **Notes** - Keep financial notes and reminders
-- 🔔 **Notifications** - Stay on top of your financial goals
+-  **AI Financial Advisor** - Get personalized financial advice using Google's Gemini AI
+-  **Dashboard** - Comprehensive overview of your financial status
+-  **Transaction Management** - Track and categorize your expenses and income
+-  **Goal Setting** - Set and track your financial goals
+-  **Receipt Scanner** - Capture and organize receipts using device camera
+-  **Shopping Lists** - Manage your shopping with budget tracking
+-  **Financial Projections** - Visualize your financial future
+-  **Store Management** - Track spending by store/merchant
+-  **Notes** - Keep financial notes and reminders
+-  **Notifications** - Stay on top of your financial goals
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -47,7 +47,7 @@ MoolaBuddy is a comprehensive financial management mobile application built with
    npm run dev
    ```
 
-## 📱 Mobile Development
+##  Mobile Development
 
 ### Android APK Build
 
@@ -86,7 +86,7 @@ MoolaBuddy is a comprehensive financial management mobile application built with
 
 2. **Build from Xcode** or use command line tools for iOS deployment.
 
-## 🛠 Available Scripts
+##  Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
@@ -98,7 +98,7 @@ MoolaBuddy is a comprehensive financial management mobile application built with
 - `npm run ios:dev` - Build, sync, and run on iOS device
 - `npm run ios:open` - Open iOS project in Xcode
 
-## 🏗 Technology Stack
+##  Technology Stack
 
 - **Frontend:** React 18, TypeScript
 - **Build Tool:** Vite
@@ -108,7 +108,7 @@ MoolaBuddy is a comprehensive financial management mobile application built with
 - **File Processing:** XLSX library
 - **Mobile Features:** Camera, File System, Local Notifications
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 moolabuddy/
@@ -122,7 +122,7 @@ moolabuddy/
 └── src/                 # Additional source files
 ```
 
-## 🔧 Build Requirements
+##  Build Requirements
 
 ### Android
 - **Java:** Version 21 (Android Studio's bundled JDK recommended)
@@ -134,7 +134,7 @@ moolabuddy/
 - **iOS:** 13.0+
 - **CocoaPods:** For dependency management
 
-## 📖 Documentation
+##  Documentation
 
 - [Android Deployment Guide](ANDROID_DEPLOYMENT.md)
 - [iOS Build Guide](IOS_BUILD_GUIDE.md)
@@ -142,13 +142,13 @@ moolabuddy/
 - [Security Guide](SECURITY_GUIDE.md)
 - [Environment Setup](ENV_SETUP_GUIDE.md)
 
-## 🔐 Security
+##  Security
 
 - API keys are stored in environment variables
 - Local data encryption for sensitive financial information
 - Secure HTTPS communication with external services
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
@@ -156,11 +156,11 @@ moolabuddy/
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Google Gemini AI for intelligent financial advice
 - Capacitor team for excellent cross-platform framework
@@ -168,4 +168,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ for better financial management**
