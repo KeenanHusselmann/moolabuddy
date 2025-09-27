@@ -27,7 +27,7 @@ MoolaBuddy is a comprehensive financial management mobile application built with
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/moolabuddy.git
+   git clone https://github.com/KeenanHusselmann/moolabuddy.git
    cd moolabuddy
    ```
 
